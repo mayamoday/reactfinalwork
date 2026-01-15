@@ -86,14 +86,35 @@ function App() {
 
   // Handler function: Update task text
   const editTask = (id, newText) => {
-    const trimmedText = newText.trim()
-    if (trimmedText) {
-      setTasks(prevTasks =>
-        prevTasks.map(task =>
-          task.id === id ? { ...task, text: trimmedText } : task
-        )
-      )
+    // Validate inputs
+    if (!id) {
+      console.warn('Cannot edit task: No ID provided')
+      return
     }
+
+    const trimmedText = newText.trim()
+    if (!trimmedText) {
+      console.warn('Cannot edit task: Empty text provided')
+      return
+    }
+
+    setTasks(prevTasks => {
+      const taskIndex = prevTasks.findIndex(task => task.id === id)
+
+      if (taskIndex === -1) {
+        console.warn(`Cannot edit task: Task with ID "${id}" not found`)
+        return prevTasks // Return unchanged array if task not found
+      }
+
+      const taskToEdit = prevTasks[taskIndex]
+      const updatedTasks = prevTasks.map(task =>
+        task.id === id ? { ...task, text: trimmedText } : task
+      )
+
+      console.log(`Edited task: "${taskToEdit.text}" → "${trimmedText}" (ID: ${id})`)
+
+      return updatedTasks
+    })
   }
 
   // Handler function: Remove task from array
@@ -123,24 +144,52 @@ function App() {
 
   // Handler function: Update filter state
   const changeFilter = (filterType) => {
-    setFilter(filterType)
+    // Validate filter type
+    const validFilters = ['all', 'active', 'completed']
+    if (validFilters.includes(filterType)) {
+      setFilter(filterType)
+      console.log(`Filter changed to: ${filterType}`)
+    } else {
+      console.warn(`Invalid filter type: ${filterType}. Using 'all' as fallback.`)
+      setFilter('all')
+    }
   }
 
   // Calculate active task count (tasks where completed === false)
   const activeTaskCount = tasks.filter(task => !task.completed).length
 
-  // Implement filter logic to get filtered tasks based on current filter
-  const filteredTasks = tasks.filter(task => {
-    switch (filter) {
+  /**
+   * getFilteredTasks - Core filtering logic function
+   * Returns filtered tasks based on current filter state
+   *
+   * @param {Array} tasksArray - Array of task objects
+   * @param {string} currentFilter - Current filter type ('all', 'active', 'completed')
+   * @returns {Array} Filtered array of tasks
+   */
+  const getFilteredTasks = (tasksArray, currentFilter) => {
+    if (!Array.isArray(tasksArray)) {
+      console.warn('Invalid tasks array provided to getFilteredTasks')
+      return []
+    }
+
+    switch (currentFilter) {
       case 'active':
-        return !task.completed
+        // Return tasks where completed === false
+        return tasksArray.filter(task => task && !task.completed)
+
       case 'completed':
-        return task.completed
+        // Return tasks where completed === true
+        return tasksArray.filter(task => task && task.completed)
+
       case 'all':
       default:
-        return true
+        // Return all tasks (with safety check)
+        return tasksArray.filter(task => task && typeof task.id === 'string')
     }
-  })
+  }
+
+  // Get filtered tasks using the enhanced function
+  const filteredTasks = getFilteredTasks(tasks, filter)
 
   return (
     <div className="app">
@@ -149,11 +198,11 @@ function App() {
       {/* Task Input Component - Implemented */}
       <TaskInput onAddTask={addTask} />
 
-      {/* Task Filters Component - Implemented (placeholder for Phase 4 enhancement) */}
+      {/* Task Filters Component - Fully Implemented */}
       <TaskFilters
-        filter={filter}
+        currentFilter={filter}
         activeTaskCount={activeTaskCount}
-        onChangeFilter={changeFilter}
+        onFilterChange={changeFilter}
       />
 
       {/* Task List Component - Implemented */}

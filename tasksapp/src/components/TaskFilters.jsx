@@ -1,49 +1,82 @@
 import './TaskFilters.css'
 
 /**
- * TaskFilters Component (Placeholder)
+ * TaskFilters Component
  *
- * Displays filter buttons and active task count.
- * This is a placeholder implementation for Task 2.5 integration.
- * Full functionality will be implemented in Phase 4.
+ * Displays filter buttons and active task count with full functionality.
+ * Implements comprehensive filtering interface for task management.
  *
  * Props:
- * - filter: Current filter state ('all', 'active', 'completed')
+ * - currentFilter: Current filter state ('all', 'active', 'completed')
  * - activeTaskCount: Number of active (incomplete) tasks
- * - onChangeFilter: Function to change the current filter
+ * - onFilterChange: Function to change the current filter
  */
-function TaskFilters({ filter, activeTaskCount, onChangeFilter }) {
-  const handleFilterChange = (newFilter) => {
-    onChangeFilter(newFilter)
+function TaskFilters({ currentFilter, activeTaskCount, onFilterChange }) {
+  /**
+   * Handles filter button clicks
+   * Calls onFilterChange prop with the selected filter type
+   */
+  const handleFilterClick = (filterType) => {
+    onFilterChange(filterType)
+  }
+
+  /**
+   * Formats the task counter display with proper grammar
+   * Handles singular/plural forms correctly
+   */
+  const formatTaskCounter = () => {
+    if (activeTaskCount === 0) {
+      return "No active tasks"
+    } else if (activeTaskCount === 1) {
+      return "1 task left"
+    } else {
+      return `${activeTaskCount} tasks left`
+    }
   }
 
   return (
-    <div className="task-filters">
-      <div className="task-filters__count">
-        <span className="task-count">
-          {activeTaskCount} {activeTaskCount === 1 ? 'task' : 'tasks'} remaining
+    <div className="task-filters" role="group" aria-label="Task filter options">
+      {/* Active task counter */}
+      <div className="task-filters__counter">
+        <span className="task-counter" aria-live="polite" aria-atomic="true">
+          {formatTaskCounter()}
         </span>
       </div>
 
-      <div className="task-filters__buttons">
+      {/* Filter buttons */}
+      <div className="task-filters__buttons" role="tablist" aria-label="Filter tasks">
         <button
-          className={`filter-button ${filter === 'all' ? 'filter-button--active' : ''}`}
-          onClick={() => handleFilterChange('all')}
           type="button"
+          className={`task-filter-button ${currentFilter === 'all' ? 'task-filter-button--active' : ''}`}
+          onClick={() => handleFilterClick('all')}
+          role="tab"
+          aria-selected={currentFilter === 'all'}
+          aria-controls="task-list"
+          aria-label="Show all tasks"
         >
           All
         </button>
+
         <button
-          className={`filter-button ${filter === 'active' ? 'filter-button--active' : ''}`}
-          onClick={() => handleFilterChange('active')}
           type="button"
+          className={`task-filter-button ${currentFilter === 'active' ? 'task-filter-button--active' : ''}`}
+          onClick={() => handleFilterClick('active')}
+          role="tab"
+          aria-selected={currentFilter === 'active'}
+          aria-controls="task-list"
+          aria-label={`Show active tasks (${activeTaskCount})`}
         >
           Active
         </button>
+
         <button
-          className={`filter-button ${filter === 'completed' ? 'filter-button--active' : ''}`}
-          onClick={() => handleFilterChange('completed')}
           type="button"
+          className={`task-filter-button ${currentFilter === 'completed' ? 'task-filter-button--active' : ''}`}
+          onClick={() => handleFilterClick('completed')}
+          role="tab"
+          aria-selected={currentFilter === 'completed'}
+          aria-controls="task-list"
+          aria-label="Show completed tasks"
         >
           Completed
         </button>

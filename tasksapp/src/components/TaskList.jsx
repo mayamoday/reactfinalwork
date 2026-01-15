@@ -25,7 +25,7 @@ function TaskList({ tasks, onToggle, onEdit, onDelete }) {
   }
 
   return (
-    <div className="task-list-container">
+    <div className="task-list-container" id="task-list">
       <ul className="task-list" role="list">
         {tasks.map((task) => (
           <TaskItem

@@ -189,6 +189,72 @@
   }
 }
 
+/* Edit mode styles */
+.task-item--editing {
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+}
+
+.task-item__edit-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  background-color: #fff;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.task-item__edit-input:focus {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Save button specific styling */
+.task-item__button--save {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+}
+
+.task-item__button--save:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.task-item__button--save:disabled {
+  background-color: #94d3a2;
+  color: #5a6c57;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Cancel button specific styling */
+.task-item__button--cancel {
+  background-color: #6c757d;
+  color: white;
+  font-weight: bold;
+}
+
+.task-item__button--cancel:hover {
+  background-color: #5a6268;
+}
+
+/* Disabled edit button for completed tasks */
+.task-item--completed .task-item__button--edit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Disabled checkbox during editing */
+.task-item--editing .task-item__checkbox:disabled + .task-item__checkbox-custom {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .task-item__checkbox-custom {
@@ -197,5 +263,9 @@
 
   .task-item__button {
     border: 2px solid currentColor;
+  }
+
+  .task-item__edit-input {
+    border-width: 3px;
   }
 }
