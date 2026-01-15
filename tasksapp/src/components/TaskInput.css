@@ -1,0 +1,105 @@
+/* TaskInput Component Styles */
+
+.task-input-form {
+  margin-bottom: 2rem;
+}
+
+.task-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.task-input-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.task-input-field {
+  padding: 0.75rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  background-color: #fff;
+}
+
+.task-input-field:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.task-input-field::placeholder {
+  color: #999;
+  opacity: 1;
+}
+
+.task-input-submit {
+  padding: 0.75rem 1.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  align-self: flex-start;
+}
+
+.task-input-submit:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.task-input-submit:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.task-input-submit:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .task-input-container {
+    gap: 0.75rem;
+  }
+
+  .task-input-field {
+    padding: 1rem;
+    font-size: 1.1rem;
+  }
+
+  .task-input-submit {
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    align-self: stretch;
+  }
+}
+
+/* For larger screens, use horizontal layout */
+@media (min-width: 769px) {
+  .task-input-container {
+    flex-direction: row;
+    align-items: end;
+    gap: 1rem;
+  }
+
+  .task-input-field {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .task-input-label {
+    margin-bottom: 0;
+    white-space: nowrap;
+    align-self: center;
+  }
+}
