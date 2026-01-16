@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import TaskItem from './TaskItem'
 import './TaskList.css'
 
@@ -17,16 +18,18 @@ function TaskList({ tasks, onToggle, onEdit, onDelete }) {
   // Handle empty state
   if (!tasks || tasks.length === 0) {
     return (
-      <div className="task-list-empty">
-        <p className="empty-message">No tasks available.</p>
+      <section className="task-list-empty" role="region" aria-label="Task list status">
+        <h2 className="sr-only">Task List Status</h2>
+        <p className="empty-message" role="status">No tasks available.</p>
         <p className="empty-hint">Add a task above to get started!</p>
-      </div>
+      </section>
     )
   }
 
   return (
-    <div className="task-list-container" id="task-list">
-      <ul className="task-list" role="list">
+    <section className="task-list-container" id="task-list" role="region" aria-labelledby="task-list-heading">
+      <h2 id="task-list-heading" className="sr-only">Task List</h2>
+      <ul className="task-list" role="list" aria-label={`${tasks.length} task${tasks.length !== 1 ? 's' : ''}`}>
         {tasks.map((task) => (
           <TaskItem
             key={task.id}
@@ -37,11 +40,13 @@ function TaskList({ tasks, onToggle, onEdit, onDelete }) {
           />
         ))}
       </ul>
-      <div className="task-list-summary">
-        <p>{tasks.length} task{tasks.length !== 1 ? 's' : ''} total</p>
+      <div className="task-list-summary" role="status" aria-live="polite">
+        <p aria-label={`${tasks.length} task${tasks.length !== 1 ? 's' : ''} total`}>
+          {tasks.length} task{tasks.length !== 1 ? 's' : ''} total
+        </p>
       </div>
-    </div>
+    </section>
   )
 }
 
-export default TaskList
+export default memo(TaskList)

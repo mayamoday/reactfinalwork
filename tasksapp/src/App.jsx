@@ -1,41 +1,109 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import TaskInput from './components/TaskInput'
 import TaskFilters from './components/TaskFilters'
 import TaskList from './components/TaskList'
 import './App.css'
+import './utils/testUtils.js' // Performance testing utilities
+import './utils/browserCompatibility.js' // Browser compatibility testing
 
+/**
+ * App Component - Main Task Manager Application
+ *
+ * This is the root container component that manages all application state
+ * and orchestrates data flow between child components. It implements:
+ *
+ * - Global state management for tasks and filters
+ * - Data persistence via localStorage with error handling
+ * - Performance optimizations with useCallback and useMemo
+ * - Cross-browser compatible UUID generation
+ * - Complete CRUD operations for task management
+ *
+ * @component
+ * @example
+ * return (
+ *   <ErrorBoundary>
+ *     <App />
+ *   </ErrorBoundary>
+ * )
+ *
+ * @since 1.0.0
+ * @author Task Manager Team
+ */
 function App() {
-  // State management with lazy initialization to load from localStorage
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = localStorage.getItem('taskManagerTasks')
-    if (savedTasks) {
+  // State management with lazy initialization as backup
+  const [tasks, setTasks] = useState([]) // Array of task objects
+  const [filter, setFilter] = useState('all') // Filter type: 'all', 'active', 'completed'
+  const [isLoaded, setIsLoaded] = useState(false) // Track if initial load is complete
+
+  /**
+   * Generates browser-compatible unique identifiers with fallback support
+   *
+   * Uses crypto.randomUUID() for modern browsers and falls back to a
+   * manual UUID v4 implementation for older browsers.
+   *
+   * @returns {string} A valid UUID v4 string
+   * @example
+   * const taskId = generateUniqueId()
+   * // Returns: "550e8400-e29b-41d4-a716-446655440000"
+   */
+  const generateUniqueId = useCallback(() => {
+    // Try crypto.randomUUID() first (modern browsers)
+    if (window.crypto && window.crypto.randomUUID) {
+      return crypto.randomUUID()
+    }
+
+    // Fallback for older browsers
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0
+      const v = c === 'x' ? r : (r & 0x3 | 0x8)
+      return v.toString(16)
+    })
+  }, [])
+
+  // Task 5.2: Load tasks from localStorage on app initialization
+  useEffect(() => {
+    const loadTasksFromStorage = () => {
       try {
-        return JSON.parse(savedTasks)
+        const savedTasks = localStorage.getItem('taskManagerTasks')
+        if (savedTasks) {
+          const parsedTasks = JSON.parse(savedTasks)
+          if (Array.isArray(parsedTasks)) {
+            setTasks(parsedTasks)
+          } else {
+            console.warn('Invalid tasks data in localStorage - not an array')
+            setTasks([])
+          }
+        } else {
+          setTasks([])
+        }
       } catch (error) {
-        console.error('Error parsing tasks from localStorage:', error)
-        return []
+        console.error('Error loading tasks from localStorage:', error)
+        setTasks([])
+      } finally {
+        setIsLoaded(true)
       }
     }
-    return []
-  }) // Array of task objects
-  const [filter, setFilter] = useState('all') // Filter type: 'all', 'active', 'completed'
 
-  // Save tasks to localStorage whenever tasks change
+    loadTasksFromStorage()
+  }, []) // Empty dependency array - run once on mount
+
+  // Task 5.1: Save tasks to localStorage whenever tasks change (after initial load)
   useEffect(() => {
-    localStorage.setItem('taskManagerTasks', JSON.stringify(tasks))
-  }, [tasks])
+    if (isLoaded) {
+      localStorage.setItem('taskManagerTasks', JSON.stringify(tasks))
+    }
+  }, [tasks, isLoaded])
 
-  // Handler function: Add new task to tasks array
-  const addTask = (text) => {
+  // Handler function: Add new task to tasks array (optimized with useCallback)
+  const addTask = useCallback((text) => {
     // Validate input text
     const trimmedText = text.trim()
     if (!trimmedText) {
-      console.warn('Cannot add empty task')
       return
     }
 
-    // Generate unique ID using crypto.randomUUID()
-    const uniqueId = crypto.randomUUID()
+    // Generate unique ID using browser-compatible method
+    const uniqueId = generateUniqueId()
 
     // Create task object with required structure
     const newTask = {
@@ -47,17 +115,14 @@ function App() {
     // Add to tasks array using spread operator for immutability
     setTasks(prevTasks => {
       const updatedTasks = [...prevTasks, newTask]
-      console.log(`Added task: "${trimmedText}" with ID: ${uniqueId}`)
-      console.log(`Total tasks: ${updatedTasks.length}`)
       return updatedTasks
     })
-  }
+  }, []) // No dependencies - function is stable
 
-  // Handler function: Toggle task completion status
-  const toggleTask = (id) => {
+  // Handler function: Toggle task completion status (optimized with useCallback)
+  const toggleTask = useCallback((id) => {
     // Validate input ID
     if (!id) {
-      console.warn('Cannot toggle task: No ID provided')
       return
     }
 
@@ -66,35 +131,26 @@ function App() {
       const taskIndex = prevTasks.findIndex(task => task.id === id)
 
       if (taskIndex === -1) {
-        console.warn(`Cannot toggle task: Task with ID "${id}" not found`)
         return prevTasks // Return unchanged array if task not found
       }
 
-      const taskToToggle = prevTasks[taskIndex]
-      const newCompletedState = !taskToToggle.completed
-
       const updatedTasks = prevTasks.map(task =>
-        task.id === id ? { ...task, completed: newCompletedState } : task
+        task.id === id ? { ...task, completed: !task.completed } : task
       )
-
-      console.log(`Toggled task: "${taskToToggle.text}" (ID: ${id})`)
-      console.log(`Status changed: ${taskToToggle.completed ? 'completed' : 'active'} → ${newCompletedState ? 'completed' : 'active'}`)
 
       return updatedTasks
     })
-  }
+  }, []) // No dependencies - function is stable
 
-  // Handler function: Update task text
-  const editTask = (id, newText) => {
+  // Handler function: Update task text (optimized with useCallback)
+  const editTask = useCallback((id, newText) => {
     // Validate inputs
     if (!id) {
-      console.warn('Cannot edit task: No ID provided')
       return
     }
 
     const trimmedText = newText.trim()
     if (!trimmedText) {
-      console.warn('Cannot edit task: Empty text provided')
       return
     }
 
@@ -102,26 +158,21 @@ function App() {
       const taskIndex = prevTasks.findIndex(task => task.id === id)
 
       if (taskIndex === -1) {
-        console.warn(`Cannot edit task: Task with ID "${id}" not found`)
         return prevTasks // Return unchanged array if task not found
       }
 
-      const taskToEdit = prevTasks[taskIndex]
       const updatedTasks = prevTasks.map(task =>
         task.id === id ? { ...task, text: trimmedText } : task
       )
 
-      console.log(`Edited task: "${taskToEdit.text}" → "${trimmedText}" (ID: ${id})`)
-
       return updatedTasks
     })
-  }
+  }, []) // No dependencies - function is stable
 
-  // Handler function: Remove task from array
-  const deleteTask = (id) => {
+  // Handler function: Remove task from array (optimized with useCallback)
+  const deleteTask = useCallback((id) => {
     // Validate input ID
     if (!id) {
-      console.warn('Cannot delete task: No ID provided')
       return
     }
 
@@ -130,107 +181,125 @@ function App() {
       const taskToDelete = prevTasks.find(task => task.id === id)
 
       if (!taskToDelete) {
-        console.warn(`Cannot delete task: Task with ID "${id}" not found`)
         return prevTasks // Return unchanged array if task not found
       }
 
       const filteredTasks = prevTasks.filter(task => task.id !== id)
-      console.log(`Deleted task: "${taskToDelete.text}" (ID: ${id})`)
-      console.log(`Remaining tasks: ${filteredTasks.length}`)
 
       return filteredTasks
     })
-  }
+  }, []) // No dependencies - function is stable
 
-  // Handler function: Update filter state
-  const changeFilter = (filterType) => {
+  // Handler function: Update filter state (optimized with useCallback)
+  const changeFilter = useCallback((filterType) => {
     // Validate filter type
     const validFilters = ['all', 'active', 'completed']
     if (validFilters.includes(filterType)) {
       setFilter(filterType)
-      console.log(`Filter changed to: ${filterType}`)
     } else {
       console.warn(`Invalid filter type: ${filterType}. Using 'all' as fallback.`)
       setFilter('all')
     }
-  }
+  }, []) // No dependencies - function is stable
 
-  // Calculate active task count (tasks where completed === false)
-  const activeTaskCount = tasks.filter(task => !task.completed).length
+  // Handler function: Clear all completed tasks (new bonus feature)
+  const clearCompleted = useCallback(() => {
+    setTasks(prevTasks => {
+      // Filter out all completed tasks, keeping only active ones
+      const activeTasks = prevTasks.filter(task => !task.completed)
+      return activeTasks
+    })
+  }, []) // No dependencies - function is stable
+
+  // Calculate active task count (optimized with useMemo)
+  const activeTaskCount = useMemo(() => {
+    return tasks.filter(task => !task.completed).length
+  }, [tasks])
+
+  // Calculate completed task count (optimized with useMemo)
+  const completedTaskCount = useMemo(() => {
+    return tasks.filter(task => task.completed).length
+  }, [tasks])
 
   /**
-   * getFilteredTasks - Core filtering logic function
+   * getFilteredTasks - Core filtering logic function (optimized with useMemo)
    * Returns filtered tasks based on current filter state
-   *
-   * @param {Array} tasksArray - Array of task objects
-   * @param {string} currentFilter - Current filter type ('all', 'active', 'completed')
-   * @returns {Array} Filtered array of tasks
    */
-  const getFilteredTasks = (tasksArray, currentFilter) => {
-    if (!Array.isArray(tasksArray)) {
-      console.warn('Invalid tasks array provided to getFilteredTasks')
+  const filteredTasks = useMemo(() => {
+    if (!Array.isArray(tasks)) {
       return []
     }
 
-    switch (currentFilter) {
+    switch (filter) {
       case 'active':
         // Return tasks where completed === false
-        return tasksArray.filter(task => task && !task.completed)
+        return tasks.filter(task => task && !task.completed)
 
       case 'completed':
         // Return tasks where completed === true
-        return tasksArray.filter(task => task && task.completed)
+        return tasks.filter(task => task && task.completed)
 
       case 'all':
       default:
-        // Return all tasks (with safety check)
-        return tasksArray.filter(task => task && typeof task.id === 'string')
+        // Return all valid tasks
+        return tasks.filter(task => task && typeof task.id === 'string')
     }
-  }
-
-  // Get filtered tasks using the enhanced function
-  const filteredTasks = getFilteredTasks(tasks, filter)
+  }, [tasks, filter]) // Recalculate only when tasks or filter changes
 
   return (
     <div className="app">
-      <h1>Task Manager</h1>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <div className="app-container">
+        <header>
+          <h1>M(a)y task manager</h1>
+        </header>
 
-      {/* Task Input Component - Implemented */}
-      <TaskInput onAddTask={addTask} />
+        {/* Wrapper for side-by-side layout */}
+        <div className="content-wrapper">
+          <main id="main-content" className="app-main" role="main" aria-label="Task management interface">
+            {/* Task Input Component - Implemented */}
+            <TaskInput onAddTask={addTask} />
 
-      {/* Task Filters Component - Fully Implemented */}
-      <TaskFilters
-        currentFilter={filter}
-        activeTaskCount={activeTaskCount}
-        onFilterChange={changeFilter}
-      />
+            {/* Task Filters Component - Fully Implemented */}
+            <TaskFilters
+              currentFilter={filter}
+              activeTaskCount={activeTaskCount}
+              completedTaskCount={completedTaskCount}
+              onFilterChange={changeFilter}
+              onClearCompleted={clearCompleted}
+            />
 
-      {/* Task List Component - Implemented */}
-      <TaskList
-        tasks={filteredTasks}
-        onToggle={toggleTask}
-        onEdit={editTask}
-        onDelete={deleteTask}
-      />
+            {/* Task List Component - Implemented */}
+            <TaskList
+              tasks={filteredTasks}
+              onToggle={toggleTask}
+              onEdit={editTask}
+              onDelete={deleteTask}
+            />
+          </main>
 
-      {/* Temporary display for development */}
-      <div className="dev-info">
-        <p>Total tasks: {tasks.length}</p>
-        <p>Active tasks: {activeTaskCount}</p>
-        <p>Current filter: {filter}</p>
-        <p>Filtered tasks: {filteredTasks.length}</p>
-        {tasks.length > 0 && (
-          <div>
-            <p>Recent tasks:</p>
-            <ul>
-              {tasks.slice(-3).map(task => (
-                <li key={task.id}>
-                  {task.completed ? '✅' : '⏳'} {task.text}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {/* Summary sidebar for development */}
+          <aside className="dev-info" role="complementary" aria-label="Task statistics">
+            <h2 className="sr-only">Task Statistics</h2>
+            <p>Total tasks: <span aria-live="polite">{tasks.length}</span></p>
+            <p>Active tasks: <span aria-live="polite">{activeTaskCount}</span></p>
+            <p>Current filter: <span aria-live="polite">{filter}</span></p>
+            <p>Filtered tasks: <span aria-live="polite">{filteredTasks.length}</span></p>
+            {tasks.length > 0 && (
+              <div>
+                <h3 className="sr-only">Recent Tasks</h3>
+                <p>Recent tasks:</p>
+                <ul aria-label="Most recent tasks">
+                  {tasks.slice(-3).map(task => (
+                    <li key={task.id}>
+                      {task.completed ? '✅' : '⏳'} {task.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </aside>
+        </div>
       </div>
     </div>
   )

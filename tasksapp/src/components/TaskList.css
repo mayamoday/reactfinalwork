@@ -1,62 +1,265 @@
-/* TaskList Component Styles */
+/* TaskList Component Styles - Task 6.5 Enhanced */
 
 .task-list-container {
-  margin: 2rem 0;
+  margin: 0; /* Remove margins as parent handles spacing */
+  position: relative;
 }
 
 .task-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* TaskItems handle their own spacing */
+  background: transparent; /* Let individual items handle backgrounds */
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
-
 
 .task-list-summary {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
   text-align: center;
-  color: #6c757d;
-  font-size: 0.9rem;
+  background: rgba(244, 204, 233, 0.6); /* Semi-transparent Pale Pink */
+  border: 1px solid rgba(209, 125, 152, 0.6); /* Dusty Rose border */
+  border-radius: 12px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-/* Empty state styles */
+.task-list-summary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(125, 28, 74, 0.5) 50%, transparent 100%); /* Berry accent */
+}
+
+.task-list-summary:hover {
+  background: rgba(244, 204, 233, 0.8); /* More opaque Pale Pink on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+}
+
+.task-list-summary p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2d1b1f; /* Dark reddish-brown text for readability on pale pink */
+  background: linear-gradient(135deg, #7D1C4A 0%, #5A1536 100%); /* Berry gradient */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced Empty State */
 .task-list-empty {
   text-align: center;
-  padding: 3rem 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 2px dashed #dee2e6;
-  margin: 2rem 0;
+  padding: 4rem 2rem;
+  background: rgba(244, 204, 233, 0.7); /* Semi-transparent Pale Pink */
+  border: 1px solid rgba(209, 125, 152, 0.6); /* Dusty Rose border */
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.1),
+              0 2px 8px -2px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.task-list-empty::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(125, 28, 74, 0.3) 20%, /* Berry accent */
+    rgba(90, 21, 54, 0.3) 80%, /* Berry accent end */
+    transparent 100%);
+}
+
+.task-list-empty::after {
+  content: '✨';
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 1.5rem;
+  opacity: 0.6;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+.task-list-empty:hover {
+  background: rgba(244, 204, 233, 0.85); /* More opaque Pale Pink on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.15),
+              0 4px 12px -2px rgba(0, 0, 0, 0.08);
 }
 
 .empty-message {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #6c757d;
-  margin: 0 0 0.5rem 0;
+  color: #2d1b1f; /* Dark reddish-brown text for pale pink background */
+  margin: 0 0 1rem 0;
+  background: linear-gradient(135deg, #7D1C4A 0%, #5A1536 100%); /* Berry gradient */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.empty-message::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(135deg, #7D1C4A 0%, #5A1536 100%); /* Berry gradient */
+  border-radius: 1px;
+  opacity: 0.6;
 }
 
 .empty-hint {
-  font-size: 1rem;
-  color: #868e96;
+  font-size: 1.1rem;
+  color: #5a4349; /* Dark reddish-brown text for readability on pale pink */
   margin: 0;
+  line-height: 1.6;
+  font-weight: 400;
+  padding: 0 1rem;
 }
 
-/* Responsive design */
+/* Responsive Design */
 @media (max-width: 768px) {
   .task-list-empty {
-    padding: 2rem 1rem;
-    margin: 1.5rem 0;
+    padding: 3rem 1.5rem;
+    border-radius: 16px;
   }
 
   .empty-message {
-    font-size: 1.1rem;
+    font-size: 1.375rem;
   }
 
   .empty-hint {
-    font-size: 0.9rem;
+    font-size: 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .task-list-summary {
+    padding: 0.875rem 1.25rem;
+    margin-top: 1.25rem;
+  }
+
+  .task-list-summary p {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-list-empty {
+    padding: 2.5rem 1rem;
+    border-radius: 12px;
+  }
+
+  .empty-message {
+    font-size: 1.25rem;
+  }
+
+  .empty-hint {
+    font-size: 0.9375rem;
+  }
+
+  .task-list-summary {
+    padding: 0.75rem 1rem;
+    margin-top: 1rem;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: more) {
+  .task-list-empty {
+    background: #ffffff;
+    border: 2px solid #000000;
+  }
+
+  .empty-message {
+    background: none;
+    -webkit-text-fill-color: #000000;
+    color: #000000;
+  }
+
+  .empty-hint {
+    color: #000000;
+  }
+
+  .task-list-summary {
+    background: #ffffff;
+    border: 2px solid #000000;
+  }
+
+  .task-list-summary p {
+    background: none;
+    -webkit-text-fill-color: #000000;
+    color: #000000;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .task-list-empty,
+  .task-list-summary {
+    transition: none;
+  }
+
+  .task-list-empty:hover,
+  .task-list-summary:hover {
+    transform: none;
+  }
+
+  .task-list-empty::after {
+    animation: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .task-list-empty {
+    background: #ffffff;
+    border: 1px solid #000000;
+    box-shadow: none;
+  }
+
+  .task-list-summary {
+    background: #ffffff;
+    border: 1px solid #000000;
+    box-shadow: none;
+  }
+
+  .empty-message,
+  .task-list-summary p {
+    background: none;
+    -webkit-text-fill-color: #000000;
+    color: #000000;
   }
 }

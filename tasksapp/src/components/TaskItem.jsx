@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import './TaskItem.css'
 
 /**
@@ -6,6 +6,7 @@ import './TaskItem.css'
  *
  * Displays a single task with interactive elements for completion toggle, editing, and deletion.
  * Implements full edit functionality with inline editing capabilities.
+ * Enhanced with visual polish and feedback animations for Task 6.8.
  *
  * Props:
  * - task: Task object with { id, text, completed }
@@ -18,20 +19,40 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState('')
 
+  // Animation states for visual feedback
+  const [isCompleting, setIsCompleting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isInteracting, setIsInteracting] = useState(false)
+
   /**
-   * Handles checkbox toggle for task completion status
+   * Handles checkbox toggle for task completion status with animation
    * Calls the onToggle prop with the task ID
    */
   const handleToggle = () => {
-    onToggle(task.id)
+    // Trigger completion animation
+    setIsCompleting(true)
+    setIsInteracting(true)
+
+    // Small delay to show animation before state change
+    setTimeout(() => {
+      onToggle(task.id)
+      setIsCompleting(false)
+      setIsInteracting(false)
+    }, 150)
   }
 
   /**
-   * Handles task deletion
+   * Handles task deletion with fade-out animation
    * Calls the onDelete prop with the task ID
    */
   const handleDelete = () => {
-    onDelete(task.id)
+    // Trigger delete animation
+    setIsDeleting(true)
+
+    // Delay actual deletion to show fade-out animation
+    setTimeout(() => {
+      onDelete(task.id)
+    }, 400) // Match animation duration
   }
 
   /**
@@ -39,8 +60,12 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
    * Sets isEditing to true and initializes editText with current task text
    */
   const handleEdit = () => {
-    setIsEditing(true)
-    setEditText(task.text)
+    setIsInteracting(true)
+    setTimeout(() => {
+      setIsEditing(true)
+      setEditText(task.text)
+      setIsInteracting(false)
+    }, 100)
   }
 
   /**
@@ -55,8 +80,13 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
       return
     }
 
+    setIsInteracting(true)
     onEdit(task.id, trimmedText)
-    setIsEditing(false)
+
+    setTimeout(() => {
+      setIsEditing(false)
+      setIsInteracting(false)
+    }, 100)
   }
 
   /**
@@ -64,8 +94,12 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
    * Sets isEditing to false and resets editText to original
    */
   const handleCancel = () => {
-    setIsEditing(false)
-    setEditText(task.text) // Reset to original text
+    setIsInteracting(true)
+    setTimeout(() => {
+      setIsEditing(false)
+      setEditText(task.text) // Reset to original text
+      setIsInteracting(false)
+    }, 100)
   }
 
   /**
@@ -89,9 +123,29 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
     }
   }
 
+  /**
+   * Handles keyboard events for checkbox (Space key toggle)
+   */
+  const handleCheckboxKeyDown = (e) => {
+    if (e.key === ' ') {
+      e.preventDefault()
+      handleToggle()
+    }
+  }
+
+  // Build dynamic class names for animations
+  const itemClasses = [
+    'task-item',
+    task.completed && 'task-item--completed',
+    isEditing && 'task-item--editing',
+    isCompleting && 'task-item--completing',
+    isDeleting && 'task-item--deleting',
+    isInteracting && 'task-item--interacting'
+  ].filter(Boolean).join(' ')
+
   return (
-    <li className={`task-item ${task.completed ? 'task-item--completed' : ''} ${isEditing ? 'task-item--editing' : ''}`}>
-      <div className="task-item__content">
+    <li className={itemClasses} role="listitem">
+      <div className="task-item__content" role="group" aria-label={`Task: ${task.text}`}>
         {/* Checkbox for completion status */}
         <label className="task-item__checkbox-label">
           <input
@@ -99,8 +153,10 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
             className="task-item__checkbox"
             checked={task.completed}
             onChange={handleToggle}
-            disabled={isEditing} // Disable checkbox during editing
+            onKeyDown={handleCheckboxKeyDown}
+            disabled={isEditing || isDeleting} // Disable during edit or deletion
             aria-label={`Mark task "${task.text}" as ${task.completed ? 'incomplete' : 'complete'}`}
+            aria-checked={task.completed}
           />
           <span className="task-item__checkbox-custom" aria-hidden="true">
             {task.completed ? '✓' : ''}
@@ -118,19 +174,29 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
             onKeyDown={handleKeyDown}
             autoFocus
             aria-label="Edit task text"
+            aria-describedby="edit-instructions"
+            role="textbox"
+            aria-required="true"
           />
         ) : (
           // View mode: task text display
           <span
             className={`task-item__text ${task.completed ? 'task-item__text--completed' : ''}`}
             title={task.text}
+            role="text"
+            aria-label={`Task text: ${task.text}${task.completed ? ' (completed)' : ' (active)'}`}
           >
             {task.text}
           </span>
         )}
 
+        {/* Hidden instructions for screen readers */}
+        <div id="edit-instructions" className="sr-only">
+          Press Enter to save changes, Escape to cancel
+        </div>
+
         {/* Action buttons - conditional rendering */}
-        <div className="task-item__actions">
+        <div className="task-item__actions" role="group" aria-label="Task actions">
           {isEditing ? (
             // Edit mode: Save and Cancel buttons
             <>
@@ -138,20 +204,23 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
                 type="button"
                 className="task-item__button task-item__button--save"
                 onClick={handleSave}
-                disabled={!editText.trim()}
-                aria-label="Save changes"
+                disabled={!editText.trim() || isInteracting}
+                aria-label="Save changes to task"
                 title="Save changes (Enter)"
               >
-                ✓
+                <span aria-hidden="true">✓</span>
+                <span className="sr-only">Save</span>
               </button>
               <button
                 type="button"
                 className="task-item__button task-item__button--cancel"
                 onClick={handleCancel}
-                aria-label="Cancel editing"
+                disabled={isInteracting}
+                aria-label="Cancel editing task"
                 title="Cancel changes (Escape)"
               >
-                ✕
+                <span aria-hidden="true">✕</span>
+                <span className="sr-only">Cancel</span>
               </button>
             </>
           ) : (
@@ -161,20 +230,23 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
                 type="button"
                 className="task-item__button task-item__button--edit"
                 onClick={handleEdit}
-                disabled={task.completed} // Disable edit for completed tasks
+                disabled={task.completed || isDeleting || isInteracting} // Disable edit for completed tasks
                 aria-label={`Edit task "${task.text}"`}
-                title="Edit task"
+                title={task.completed ? "Cannot edit completed task" : "Edit task"}
               >
-                ✎
+                <span aria-hidden="true">✎</span>
+                <span className="sr-only">Edit</span>
               </button>
               <button
                 type="button"
                 className="task-item__button task-item__button--delete"
                 onClick={handleDelete}
+                disabled={isDeleting || isInteracting}
                 aria-label={`Delete task "${task.text}"`}
                 title="Delete task"
               >
-                ×
+                <span aria-hidden="true">×</span>
+                <span className="sr-only">Delete</span>
               </button>
             </>
           )}
@@ -184,4 +256,4 @@ function TaskItem({ task, onToggle, onEdit, onDelete }) {
   )
 }
 
-export default TaskItem
+export default memo(TaskItem)
